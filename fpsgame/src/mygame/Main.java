@@ -25,7 +25,6 @@ public class Main extends SimpleApplication {
     @Override
     public void simpleInitApp() {
         
-        Box boxParede = new Box(Vector3f.ZERO, 0f, 1f, 1f);
         Box boxChao = new Box(Vector3f.ZERO, 5f, 0f, 5f);
         Spatial chao = new Geometry("Box", boxChao);
 
@@ -79,6 +78,15 @@ public class Main extends SimpleApplication {
     // 2 = parede "vertical"
     
     public void desenhaCena(int matriz[][]) {
+        
+        int i = matriz.length;
+        int j = matriz[0].length;
+        
+        //TO DO: Através do i e j, criar as paredes que cercam o labirinto
+        
+        
+        
+        //TO DO: Depois de criado os limites do labirinto, criar as paredes internas
         
         for (int x = 0; x < matriz.length; x++) {
             for (int z = 0; z < matriz[x].length; z++) {
