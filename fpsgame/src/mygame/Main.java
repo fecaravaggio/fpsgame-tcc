@@ -1,14 +1,23 @@
 package mygame;
 
 import com.jme3.app.SimpleApplication;
+import com.jme3.asset.TextureKey;
+import static com.jme3.bullet.PhysicsSpace.getPhysicsSpace;
+import com.jme3.bullet.collision.shapes.BoxCollisionShape;
+import com.jme3.bullet.control.RigidBodyControl;
+import com.jme3.font.BitmapText;
 import com.jme3.material.Material;
+import com.jme3.material.RenderState;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Quaternion;
+import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.RenderManager;
+import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
+import com.jme3.texture.Texture;
 
 /**
  * This is the Main Class of your Game. You should only do initialization here.
@@ -16,6 +25,11 @@ import com.jme3.scene.shape.Box;
  * @author normenhansen
  */
 public class Main extends SimpleApplication {
+    
+    
+    Material mat;
+    Material matWall;
+    Material matFloor;
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -24,17 +38,7 @@ public class Main extends SimpleApplication {
 
     @Override
     public void simpleInitApp() {
-        
-        Box boxChao = new Box(Vector3f.ZERO, 5f, 0f, 5f);
-        Spatial chao = new Geometry("Box", boxChao);
-
-        Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        mat.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/splat/grass.jpg"));
-        chao.setMaterial(mat);
-        chao.setLocalTranslation(1.0f, -1f, 5.0f);      
-
-        rootNode.attachChild(chao);
-        
+  
         /*
         | 1 | 1 | 1 | 1 | 1 |
         | 2 | 0 | 2 | 0 | 2 |
@@ -54,7 +58,8 @@ public class Main extends SimpleApplication {
         
         int matriz2[][] = {{1, 1, 1, 1, 1, 1}, {2, 0, 2, 0, 0, 2}, {2, 0, 2, 1, 0, 2}, {2, 0, 0, 0, 0, 2}, {1, 1, 1, 1, 1, 1}};
         
-        desenhaCena(matriz2);
+        initMaterial();
+        desenhaCena(matriz);
         
     }
     
@@ -77,17 +82,69 @@ public class Main extends SimpleApplication {
     // 1 = parede "horizontal"
     // 2 = parede "vertical"
     
+    public void initMaterial () {
+        
+        matFloor = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        TextureKey keyFloor = new TextureKey("Textures/Terrain/splat/grass.jpg");
+        keyFloor.setGenerateMips(true);
+        Texture texFloor = assetManager.loadTexture(keyFloor);
+        texFloor.setWrap(Texture.WrapMode.Repeat);
+        matFloor.setTexture("ColorMap", texFloor);
+        
+        matWall = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        TextureKey keyWall = new TextureKey("Textures/Terrain/BrickWall/BrickWall.jpg");
+        keyWall.setGenerateMips(true);
+        Texture texWall = assetManager.loadTexture(keyWall);
+        texWall.setWrap(Texture.WrapMode.Repeat);
+        matWall.setTexture("ColorMap", texWall);      
+        matWall.getAdditionalRenderState().setFaceCullMode(RenderState.FaceCullMode.Off);
+        
+    }
+    
     public void desenhaCena(int matriz[][]) {
         
-        int i = matriz.length;
-        int j = matriz[0].length;
+        float x = (float) matriz.length;
+        float z = (float) matriz[0].length;
+  
         
-        //TO DO: Através do i e j, criar as paredes que cercam o labirinto
+        //TO DO: Através do i e j, criar o chão e as paredes que cercam o labirinto
+        
+        /*
+        //Box boxChao = new Box(Vector3f.ZERO, 5f, 0f, 5f);
+        Box boxChao = new Box(10f, 0.1f, 5f);
+        Spatial chao = new Geometry("Box", boxChao);
+        boxChao.scaleTextureCoordinates(new Vector2f(3f, 6f));
+
+        Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        mat.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/splat/grass.jpg"));
+        chao.setMaterial(mat);
+        chao.setLocalTranslation(1.0f, -1f, 6.2f);      
+        */
+        
+        Box boxChao = new Box(10f, 0.1f, 5f);
+        Spatial chao = new Geometry("Box", boxChao);
+        boxChao.scaleTextureCoordinates(new Vector2f(3f, 6f));
         
         
+        chao.setMaterial(matFloor);
+        chao.setShadowMode(ShadowMode.Receive);
+        chao.setLocalTranslation(0, -0.1f, 0);
+        chao.addControl(new RigidBodyControl(new BoxCollisionShape(new Vector3f(10f, 0.1f, 5f)), 0));
+        
+        
+        rootNode.attachChild(chao);
+        
+        Box boxParede = new Box(Vector3f.ZERO, x, 1, z);
+        Spatial paredes = new Geometry("Box", boxParede);
+        boxParede.scaleTextureCoordinates(new Vector2f(x/2, z/2));
+        
+        paredes.setMaterial(matWall);
+        paredes.setLocalTranslation(1.0f, 0f, 6.2f);
+        rootNode.attachChild(paredes);
         
         //TO DO: Depois de criado os limites do labirinto, criar as paredes internas
         
+        /*
         for (int x = 0; x < matriz.length; x++) {
             for (int z = 0; z < matriz[x].length; z++) {
                 System.out.print(matriz[x][z] + " ");
@@ -120,7 +177,8 @@ public class Main extends SimpleApplication {
                     }
                 }
             }
-        }     
+        }   
+        */
     }
   
 
