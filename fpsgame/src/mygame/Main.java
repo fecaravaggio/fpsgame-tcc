@@ -61,7 +61,6 @@ public class Main extends SimpleApplication {
         initMaterial();
         initFloor(5, 5);
         initWall();
-        initCrossHairs();
         desenhaCena(matriz);
         
     }
@@ -118,10 +117,10 @@ public class Main extends SimpleApplication {
         rootNode.attachChild(chao);  
     }
     
-    public void limiteLabirinto (int i, int j) {
+    public void limiteLabirinto (int x, int y) {
         
-        //x = 5
-        //y = 5
+        //x = 4
+        //y = 4
         
     }
     
@@ -138,18 +137,8 @@ public class Main extends SimpleApplication {
         rootNode.attachChild(paredeHor);
         
     }
+   
     
-    protected void initCrossHairs() {
-        guiFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
-        BitmapText ch = new BitmapText(guiFont, false);
-        ch.setSize(guiFont.getCharSet().getRenderedSize() * 2);
-        ch.setText("+"); // crosshairs
-        ch.setLocalTranslation( // center
-                settings.getWidth() / 2 - guiFont.getCharSet().getRenderedSize() / 3 * 2,
-                settings.getHeight() / 2 + ch.getLineHeight() / 2, 0);
-        guiNode.attachChild(ch);
-    }
-     
     public void desenhaCena(int matriz[][]) {
         
         float x = (float) matriz.length;
