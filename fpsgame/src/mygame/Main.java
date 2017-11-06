@@ -122,6 +122,8 @@ public class Main extends SimpleApplication {
         //x = 4
         //y = 4
         
+        
+        
     }
     
     public void initWall () {
