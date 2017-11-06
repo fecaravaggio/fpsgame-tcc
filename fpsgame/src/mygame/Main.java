@@ -59,6 +59,8 @@ public class Main extends SimpleApplication {
         int matriz2[][] = {{1, 1, 1, 1, 1, 1}, {2, 0, 2, 0, 0, 2}, {2, 0, 2, 1, 0, 2}, {2, 0, 0, 0, 0, 2}, {1, 1, 1, 1, 1, 1}};
         
         initMaterial();
+        initFloor(5, 5);
+        initWall();
         desenhaCena(matriz);
         
     }
@@ -97,9 +99,45 @@ public class Main extends SimpleApplication {
         Texture texWall = assetManager.loadTexture(keyWall);
         texWall.setWrap(Texture.WrapMode.Repeat);
         matWall.setTexture("ColorMap", texWall);      
-        matWall.getAdditionalRenderState().setFaceCullMode(RenderState.FaceCullMode.Off);
+       // matWall.getAdditionalRenderState().setFaceCullMode(RenderState.FaceCullMode.Off);
         
     }
+    
+    public void initFloor (int i, int j) {
+          
+        Box boxChao = new Box((float) i, 0.1f, (float) j);
+        Spatial chao = new Geometry("Box", boxChao);
+        boxChao.scaleTextureCoordinates(new Vector2f((float) i/3, (float) j));
+               
+        chao.setMaterial(matFloor);
+        chao.setShadowMode(ShadowMode.Receive);
+        chao.setLocalTranslation(0, -0.1f, 0);
+        chao.addControl(new RigidBodyControl(new BoxCollisionShape(new Vector3f((float) i, 0.1f, (float) j)), 0));
+             
+        rootNode.attachChild(chao);  
+    }
+    
+    public void limiteLabirinto (int x, int y) {
+        
+        //x = 4
+        //y = 4
+        
+    }
+    
+    public void initWall () {
+        
+        Box boxParede = new Box(Vector3f.ZERO, 0f, 1f, 1f);
+        Spatial paredeHor = new Geometry("Box", boxParede);
+        boxParede.scaleTextureCoordinates(new Vector2f(3f, 2f));
+
+        paredeHor.setMaterial(matWall);
+
+        //paredeHor.setLocalTranslation(-1 + x * 2, 0, -1 + z * 2);
+        paredeHor.setLocalTranslation(-1, 1, -1);
+        rootNode.attachChild(paredeHor);
+        
+    }
+   
     
     public void desenhaCena(int matriz[][]) {
         
@@ -121,18 +159,8 @@ public class Main extends SimpleApplication {
         chao.setLocalTranslation(1.0f, -1f, 6.2f);      
         */
         
-        Box boxChao = new Box(10f, 0.1f, 5f);
-        Spatial chao = new Geometry("Box", boxChao);
-        boxChao.scaleTextureCoordinates(new Vector2f(3f, 6f));
         
-        
-        chao.setMaterial(matFloor);
-        chao.setShadowMode(ShadowMode.Receive);
-        chao.setLocalTranslation(0, -0.1f, 0);
-        chao.addControl(new RigidBodyControl(new BoxCollisionShape(new Vector3f(10f, 0.1f, 5f)), 0));
-        
-        
-        rootNode.attachChild(chao);
+        /* CUBO PAREDE ANTIGA
         
         Box boxParede = new Box(Vector3f.ZERO, x, 1, z);
         Spatial paredes = new Geometry("Box", boxParede);
@@ -141,6 +169,8 @@ public class Main extends SimpleApplication {
         paredes.setMaterial(matWall);
         paredes.setLocalTranslation(1.0f, 0f, 6.2f);
         rootNode.attachChild(paredes);
+        
+        */
         
         //TO DO: Depois de criado os limites do labirinto, criar as paredes internas
         
