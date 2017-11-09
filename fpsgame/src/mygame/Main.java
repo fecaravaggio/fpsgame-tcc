@@ -30,6 +30,7 @@ public class Main extends SimpleApplication {
     Material mat;
     Material matWall;
     Material matFloor;
+    Box boxParede;
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -39,34 +40,25 @@ public class Main extends SimpleApplication {
     @Override
     public void simpleInitApp() {
   
-        /*
-        | 1 | 1 | 1 | 1 | 1 |
-        | 2 | 0 | 2 | 0 | 2 |
-        | 2 | 0 | 2 | 0 | 2 |
-        | 2 | 0 | 0 | 0 | 2 |
-        | 1 | 1 | 1 | 1 | 1 |
-        */
+        boxParede = new Box(Vector3f.ZERO, 0f, 0.5f, 1f);
+        boxParede.scaleTextureCoordinates(new Vector2f(2f, 1f));
+        
         int matriz[][] = {{1, 1, 1, 1, 1}, {2, 0, 2, 0, 2}, {2, 0, 2, 0, 2}, {2, 0, 0, 0, 2}, {1, 1, 1, 1, 1}};
-        
-        /*
-        | 1 | 1 | 1 | 1 | 1 | 1 |
-        | 2 | 0 | 2 | 0 | 0 | 2 |
-        | 2 | 0 | 2 | 1 | 0 | 2 |
-        | 2 | 0 | 0 | 0 | 0 | 2 |
-        | 1 | 1 | 1 | 1 | 1 | 1 |
-        */
-        
+            
         int matriz2[][] = {{1, 1, 1, 1, 1, 1}, {2, 0, 2, 0, 0, 2}, {2, 0, 2, 1, 0, 2}, {2, 0, 0, 0, 0, 2}, {1, 1, 1, 1, 1, 1}};
         
+        int x = matriz.length;
+        int y = matriz[0].length;
+  
         initMaterial();
-        initFloor(5, 5);
-        initWall();
+        initFloor(x, y);
+        limiteLabirinto (x, y);
         initCrossHairs();
-        desenhaCena(matriz);
+        //desenhaCena(matriz);
         
     }
     
-    /*
+    /* matriz1
     | 1 | 1 | 1 | 1 | 1 |
     | 2 | 0 | 2 | 0 | 2 |
     | 2 | 0 | 2 | 0 | 2 |
@@ -74,7 +66,7 @@ public class Main extends SimpleApplication {
     | 1 | 1 | 1 | 1 | 1 |
     */
         
-    /*
+    /* matriz2
     | 1 | 1 | 1 | 1 | 1 | 1 |
     | 2 | 0 | 2 | 0 | 0 | 2 |
  EU | 2 | 0 | 2 | 1 | 0 | 2 |
@@ -120,28 +112,40 @@ public class Main extends SimpleApplication {
     
     public void limiteLabirinto (int x, int y) {
         
-        //x = 4
-        //y = 4
+        float ang = 0f;
+        //float a = 0, b = 0, c = 0;
+        int j = 0, i = 0;
         
-        
+        while (j < y) {
+            Vector3f vt = new Vector3f(0 - y, 0.5f, y-1 - j * 2);
+            Vector3f vt2 = new Vector3f(0 + y, 0.5f, y-1 - j * 2);
+            initWall(vt, ang);
+            initWall(vt2, ang);
+            j++;  
+        }
+        ang = (float) 1.5708;
+         while (i < x) {
+            Vector3f vt = new Vector3f(x-1 - i * 2, 0.5f, 0 - x);
+            Vector3f vt2 = new Vector3f(x-1 - i * 2, 0.5f, 0 + x);
+            initWall(vt, ang);
+            initWall(vt2, ang);
+            i++;  
+        }
         
     }
     
-    public void initWall () {
+    public void initWall (Vector3f ori, float angulo) {
         
-        Box boxParede = new Box(Vector3f.ZERO, 0f, 1f, 1f);
-        Spatial paredeHor = new Geometry("Box", boxParede);
-        boxParede.scaleTextureCoordinates(new Vector2f(3f, 2f));
-
-        paredeHor.setMaterial(matWall);
-
-        //paredeHor.setLocalTranslation(-1 + x * 2, 0, -1 + z * 2);
-        paredeHor.setLocalTranslation(-1, 1, -1);
-        rootNode.attachChild(paredeHor);
+        Spatial parede = new Geometry("Box", boxParede);
+        parede.setMaterial(matWall);
+        parede.setLocalTranslation(ori);
+        parede.rotate(0, angulo, 0);
+        rootNode.attachChild(parede);
         
     }
     
     protected void initCrossHairs() {
+        
         guiFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
         BitmapText ch = new BitmapText(guiFont, false);
         ch.setSize(guiFont.getCharSet().getRenderedSize() * 2);
@@ -150,6 +154,7 @@ public class Main extends SimpleApplication {
                 settings.getWidth() / 2 - guiFont.getCharSet().getRenderedSize() / 3 * 2,
                 settings.getHeight() / 2 + ch.getLineHeight() / 2, 0);
         guiNode.attachChild(ch);
+        
     }
    
     
@@ -157,35 +162,7 @@ public class Main extends SimpleApplication {
         
         float x = (float) matriz.length;
         float z = (float) matriz[0].length;
-  
-        
-        //TO DO: Através do i e j, criar o chão e as paredes que cercam o labirinto
-        
-        /*
-        //Box boxChao = new Box(Vector3f.ZERO, 5f, 0f, 5f);
-        Box boxChao = new Box(10f, 0.1f, 5f);
-        Spatial chao = new Geometry("Box", boxChao);
-        boxChao.scaleTextureCoordinates(new Vector2f(3f, 6f));
 
-        Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        mat.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/splat/grass.jpg"));
-        chao.setMaterial(mat);
-        chao.setLocalTranslation(1.0f, -1f, 6.2f);      
-        */
-        
-        
-        /* CUBO PAREDE ANTIGA
-        
-        Box boxParede = new Box(Vector3f.ZERO, x, 1, z);
-        Spatial paredes = new Geometry("Box", boxParede);
-        boxParede.scaleTextureCoordinates(new Vector2f(x/2, z/2));
-        
-        paredes.setMaterial(matWall);
-        paredes.setLocalTranslation(1.0f, 0f, 6.2f);
-        rootNode.attachChild(paredes);
-        
-        */
-        
         //TO DO: Depois de criado os limites do labirinto, criar as paredes internas
         
         /*
