@@ -18,6 +18,7 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
 import com.jme3.texture.Texture;
+import java.util.Arrays;
 
 /**
  * This is the Main Class of your Game. You should only do initialization here.
@@ -31,6 +32,7 @@ public class Main extends SimpleApplication {
     Material matWall;
     Material matFloor;
     Box boxParede;
+    Vector3f coordPlayer;
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -43,24 +45,32 @@ public class Main extends SimpleApplication {
         boxParede = new Box(Vector3f.ZERO, 0f, 0.5f, 1f);
         boxParede.scaleTextureCoordinates(new Vector2f(2f, 1f));
         
-        int matriz[][] = {{1, 1, 1, 1, 1}, {2, 0, 2, 0, 2}, {2, 0, 2, 0, 2}, {2, 0, 0, 0, 2}, {1, 1, 1, 1, 1}};
-            
-        int matriz2[][] = {{1, 1, 1, 1, 1, 1}, {2, 0, 2, 0, 0, 2}, {2, 0, 2, 1, 0, 2}, {2, 0, 0, 0, 0, 2}, {1, 1, 1, 1, 1, 1}};
+        //int matriz[][] = {{1, 1, 1, 1, 1}, {2, 0, 2, 0, 2}, {2, 0, 2, 0, 2}, {2, 0, 0, 0, 2}, {1, 1, 1, 1, 1}};
+        String matriz[][] = {{"1", "1", "1", "1", "1"}, {"2", "i", "2", "0", "2"}, {"2", "0", "2", "0", "2"}, {"2", "0", "0", "0", "2"}, {"1", "1", "1", "1", "1"}};    
+        
+        //int matriz2[][] = {{1, 1, 1, 1, 1, 1}, {2, 0, 2, 0, 0, 2}, {2, 0, 2, 1, 0, 2}, {2, 0, 0, 0, 0, 2}, {1, 1, 1, 1, 1, 1}};
+        String matriz2[][] = {{"1", "1", "1", "1", "1", "1"}, {"2", "i", "2", "0", "0", "2"}, {"2", "0", "2", "1", "0", "2"}, {"2", "0", "0", "0", "0", "2"}, {"1", "1", "1", "1", "1", "1"}};
         
         int x = matriz.length;
         int y = matriz[0].length;
-  
+
         initMaterial();
         initFloor(x, y);
         limiteLabirinto (x, y);
         initCrossHairs();
+        coordPlayer = coordInicio(matriz);
+        
+        this.cam.setLocation(coordPlayer);
+        //cam.lookAt(Vector3f.ZERO, new Vector3f(0, 1, 0));
+        //cam.setFrustumFar(15);
+        
         //desenhaCena(matriz);
         
     }
     
     /* matriz1
     | 1 | 1 | 1 | 1 | 1 |
-    | 2 | 0 | 2 | 0 | 2 |
+    | 2 | i | 2 | 0 | 2 |
     | 2 | 0 | 2 | 0 | 2 |
     | 2 | 0 | 0 | 0 | 2 |
     | 1 | 1 | 1 | 1 | 1 |
@@ -113,7 +123,6 @@ public class Main extends SimpleApplication {
     public void limiteLabirinto (int x, int y) {
         
         float ang = 0f;
-        //float a = 0, b = 0, c = 0;
         int j = 0, i = 0;
         
         while (j < y) {
@@ -124,7 +133,7 @@ public class Main extends SimpleApplication {
             j++;  
         }
         ang = (float) 1.5708;
-         while (i < x) {
+        while (i < x) {
             Vector3f vt = new Vector3f(x-1 - i * 2, 0.5f, 0 - x);
             Vector3f vt2 = new Vector3f(x-1 - i * 2, 0.5f, 0 + x);
             initWall(vt, ang);
@@ -154,6 +163,29 @@ public class Main extends SimpleApplication {
                 settings.getWidth() / 2 - guiFont.getCharSet().getRenderedSize() / 3 * 2,
                 settings.getHeight() / 2 + ch.getLineHeight() / 2, 0);
         guiNode.attachChild(ch);
+        
+    }
+    
+    public Vector3f coordInicio (String matriz[][]) {
+        //percorrer a matriz e encontrar o "i" de início do personagem
+        
+        String aux = "";
+        Vector3f vt = new Vector3f(0, 0, 0);
+        
+        for (int i = 0; i < matriz.length; i++) {
+            for (int j = 0; j < matriz[i].length; j++) {
+                aux = matriz[i][j];
+                if (aux == "i") {
+                    System.out.println("Achei! Posicao: x=" + i + "y=" + j);
+                    //Colocar camera inicial nessa posição e o angulo de visao
+                    vt = new Vector3f(1 - matriz.length + i * 2, 0.5f,matriz.length - 1 - j * 2);
+                }
+            }
+        }
+        return vt;    
+    }
+    
+    public void getAngulo () {
         
     }
    
