@@ -18,6 +18,10 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
 import com.jme3.texture.Texture;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -26,13 +30,14 @@ import java.util.Arrays;
  * @author normenhansen
  */
 public class Main extends SimpleApplication {
-    
-    
+      
     Material mat;
     Material matWall;
     Material matFloor;
-    Box boxParede;
+    Box boxParede2;
     Vector3f coordPlayer;
+    ArrayList<Tile> tileArray = new ArrayList<Tile>();
+    int iMap, jMap;
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -42,24 +47,23 @@ public class Main extends SimpleApplication {
     @Override
     public void simpleInitApp() {
   
-        boxParede = new Box(Vector3f.ZERO, 0f, 0.5f, 1f);
-        boxParede.scaleTextureCoordinates(new Vector2f(2f, 1f));
         
-        //int matriz[][] = {{1, 1, 1, 1, 1}, {2, 0, 2, 0, 2}, {2, 0, 2, 0, 2}, {2, 0, 0, 0, 2}, {1, 1, 1, 1, 1}};
-        String matriz[][] = {{"1", "1", "1", "1", "1"}, {"2", "i", "2", "0", "2"}, {"2", "0", "2", "0", "2"}, {"2", "0", "0", "0", "2"}, {"1", "1", "1", "1", "1"}};    
-        
-        //int matriz2[][] = {{1, 1, 1, 1, 1, 1}, {2, 0, 2, 0, 0, 2}, {2, 0, 2, 1, 0, 2}, {2, 0, 0, 0, 0, 2}, {1, 1, 1, 1, 1, 1}};
-        String matriz2[][] = {{"1", "1", "1", "1", "1", "1"}, {"2", "i", "2", "0", "0", "2"}, {"2", "0", "2", "1", "0", "2"}, {"2", "0", "0", "0", "0", "2"}, {"1", "1", "1", "1", "1", "1"}};
-        
-        int x = matriz.length;
-        int y = matriz[0].length;
+        boxParede2 = new Box(Vector3f.ZERO, 1f, 1f, 1f);
+        boxParede2.scaleTextureCoordinates(new Vector2f(1.5f, 1.5f));
 
         initMaterial();
-        initFloor(x, y);
-        limiteLabirinto (x, y);
         initCrossHairs();
-        coordPlayer = coordInicio(matriz);
         
+        try {
+            loadMap("src\\mygame\\maps\\map1.txt");
+        } 
+        catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        initFloor(iMap, jMap);
+        coordPlayer = coordInicio();
+
         this.cam.setLocation(coordPlayer);
         //cam.lookAt(Vector3f.ZERO, new Vector3f(0, 1, 0));
         //cam.setFrustumFar(15);
@@ -68,24 +72,32 @@ public class Main extends SimpleApplication {
         
     }
     
-    /* matriz1
-    | 1 | 1 | 1 | 1 | 1 |
-    | 2 | i | 2 | 0 | 2 |
-    | 2 | 0 | 2 | 0 | 2 |
-    | 2 | 0 | 0 | 0 | 2 |
-    | 1 | 1 | 1 | 1 | 1 |
+    /* 
+    map2.txt
+    
+    11111
+    1i101
+    10101
+    10001
+    11111
+    
+    map1.txt
+    
+    1111111111111111111111111111111111111111
+    1i00000000000000Q00000000000100010000001
+    1010101010110101011111101010001010101101
+    101011111011010100000010101010000000000S
+    1010001010111101011110000000110101011101
+    1011111100000110100000011110110101010101
+    1011111111111101011111111110110101110101
+    101000000000000Q0000000000100000Q0000001
+    1011011010101010101010101010111010101101
+    1010001000100001000010000010101000101101
+    1010111111111111111111111110101110111101
+    100000000000001Q000000100000100000000001
+    1111111111111111111111111111111111111111
+    
     */
-        
-    /* matriz2
-    | 1 | 1 | 1 | 1 | 1 | 1 |
-    | 2 | 0 | 2 | 0 | 0 | 2 |
- EU | 2 | 0 | 2 | 1 | 0 | 2 |
-    | 2 | 0 | 0 | 0 | 0 | 2 |
-    | 1 | 1 | 1 | 1 | 1 | 1 |
-    */  
-    // 0 = espaço livre
-    // 1 = parede "horizontal"
-    // 2 = parede "vertical"
     
     public void initMaterial () {
         
@@ -110,46 +122,23 @@ public class Main extends SimpleApplication {
           
         Box boxChao = new Box((float) i, 0.1f, (float) j);
         Spatial chao = new Geometry("Box", boxChao);
-        boxChao.scaleTextureCoordinates(new Vector2f((float) i/3, (float) j));
+        boxChao.scaleTextureCoordinates(new Vector2f((float) i, (float) j));
                
         chao.setMaterial(matFloor);
         chao.setShadowMode(ShadowMode.Receive);
-        chao.setLocalTranslation(0, -0.1f, 0);
+        chao.setLocalTranslation(i, -0.1f, j);
         chao.addControl(new RigidBodyControl(new BoxCollisionShape(new Vector3f((float) i, 0.1f, (float) j)), 0));
              
         rootNode.attachChild(chao);  
     }
     
-    public void limiteLabirinto (int x, int y) {
+ 
+    public void initWall (Vector3f ori) {
         
-        float ang = 0f;
-        int j = 0, i = 0;
-        
-        while (j < y) {
-            Vector3f vt = new Vector3f(0 - y, 0.5f, y-1 - j * 2);
-            Vector3f vt2 = new Vector3f(0 + y, 0.5f, y-1 - j * 2);
-            initWall(vt, ang);
-            initWall(vt2, ang);
-            j++;  
-        }
-        ang = (float) 1.5708;
-        while (i < x) {
-            Vector3f vt = new Vector3f(x-1 - i * 2, 0.5f, 0 - x);
-            Vector3f vt2 = new Vector3f(x-1 - i * 2, 0.5f, 0 + x);
-            initWall(vt, ang);
-            initWall(vt2, ang);
-            i++;  
-        }
-        
-    }
-    
-    public void initWall (Vector3f ori, float angulo) {
-        
-        Spatial parede = new Geometry("Box", boxParede);
-        parede.setMaterial(matWall);
-        parede.setLocalTranslation(ori);
-        parede.rotate(0, angulo, 0);
-        rootNode.attachChild(parede);
+        Spatial paredeBox = new Geometry("Box", boxParede2);
+        paredeBox.setMaterial(matWall);
+        paredeBox.setLocalTranslation(ori);
+        rootNode.attachChild(paredeBox);
         
     }
     
@@ -166,74 +155,79 @@ public class Main extends SimpleApplication {
         
     }
     
-    public Vector3f coordInicio (String matriz[][]) {
+    public Vector3f coordInicio () {
         //percorrer a matriz e encontrar o "i" de início do personagem
         
         String aux = "";
         Vector3f vt = new Vector3f(0, 0, 0);
+        Tile t;
+
+        for (int i = 0; i < tileArray.size(); i++) {
+            t = tileArray.get(i);
+            //System.out.println ("oh o type do t: " + t.getType());
+             if (t.getType() == 'i') {
+                 System.out.println("achei o i"); 
+                 System.out.println("x (i) = " + t.getTileX() + " e y (j) = " + t.getTileY());
+                 vt = new Vector3f(1 + t.getTileX() * 2, 0.5f,1 + t.getTileY() * 2);
+                 break;
+             }         
+        }
+        return vt;
+    }
+    
+    public void anguloInicio () {
+        //procurar os elementos vizinhos
+        //encontrar 0
+        //para saber o angulo inicial
         
-        for (int i = 0; i < matriz.length; i++) {
-            for (int j = 0; j < matriz[i].length; j++) {
-                aux = matriz[i][j];
-                if (aux == "i") {
-                    System.out.println("Achei! Posicao: x=" + i + "y=" + j);
-                    //Colocar camera inicial nessa posição e o angulo de visao
-                    vt = new Vector3f(1 - matriz.length + i * 2, 0.5f,matriz.length - 1 - j * 2);
+        // n sei se isso vale a pena, mais facil ser carregado junto com o labirinto
+        
+    }
+    
+    private void loadMap(String fileName) throws IOException {
+        ArrayList lines = new ArrayList();
+        int coluna = 0;
+        int linha = 0;
+
+        BufferedReader reader = new BufferedReader(new FileReader(fileName));
+        
+        while (true) {
+            String line = reader.readLine();
+            // no more lines to read
+            if (line == null) {
+                reader.close();
+                break;
+            }
+
+            if (!line.startsWith("!")) {
+                lines.add(line);
+                coluna = Math.max(coluna, line.length());
+                jMap = coluna;
+
+            }
+        }
+        linha = lines.size();
+        iMap = linha;
+        
+        System.out.println("width/j tem: " + coluna + " e height/i tem: " + linha);
+        
+        for (int i = 0; i < linha; i++) {
+            String line = (String) lines.get(i);
+            System.out.println(line);
+            for (int j = 0; j < coluna; j++) {
+                char type = line.charAt(j);
+                Tile t = new Tile(i, j, type);
+                tileArray.add(t);
+                
+                //t.tileType();
+                if (type == '1') {
+                    System.out.println("i = " + i + " j = " + j);
+                    Vector3f vt = new Vector3f(+1 + i * 2, 0.5f, +1 + j * 2);
+                    initWall(vt);
                 }
             }
         }
-        return vt;    
     }
-    
-    public void getAngulo () {
-        
-    }
-   
-    
-    public void desenhaCena(int matriz[][]) {
-        
-        float x = (float) matriz.length;
-        float z = (float) matriz[0].length;
-
-        //TO DO: Depois de criado os limites do labirinto, criar as paredes internas
-        
-        /*
-        for (int x = 0; x < matriz.length; x++) {
-            for (int z = 0; z < matriz[x].length; z++) {
-                System.out.print(matriz[x][z] + " ");
-                if (matriz[x][z] == 1) {
-                    //desenhar muro horizontal
-                    Box boxParede = new Box(Vector3f.ZERO, 0f, 1f, 1f);
-                    Spatial paredeHor = new Geometry("Box", boxParede);
-
-                    Material mat2 = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-                    mat2.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/BrickWall/BrickWall.jpg"));
-                    paredeHor.setMaterial(mat2);
-
-                    //paredeHor.setLocalTranslation(-1 + x * 2, 0, 9 - z * 2);
-                    paredeHor.setLocalTranslation(-1 + x*2, 0, -1 + z*2);
-                    rootNode.attachChild(paredeHor);
-                }
-                else {
-                    if(matriz[x][z] == 2) {
-                        //desenhar muro vertical
-                        Box boxParede2 = new Box(Vector3f.ZERO, 1f, 1f, 0f);
-                        Spatial paredeVert= new Geometry("Box", boxParede2);
-
-                        Material mat4 = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-                        mat4.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/BrickWall/BrickWall.jpg"));
-                        paredeVert.setMaterial(mat4);
-
-                        //paredeVert.setLocalTranslation(-2 + x * 2, 0, 10 - z * 2);
-                        paredeVert.setLocalTranslation(-2 + x * 2, 0, z * 2);
-                        rootNode.attachChild(paredeVert);
-                    }
-                }
-            }
-        }   
-        */
-    }
-  
 
     @Override
     public void simpleUpdate(float tpf) {

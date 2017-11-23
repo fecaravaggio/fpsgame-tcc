@@ -24,5 +24,29 @@ public class Player {
         this.coord = coord;
         this.angle = angle;      
     }
+
+    public Vector3f getCoord() {
+        return coord;
+    }
+
+    public void setCoord(Vector3f coord) {
+        this.coord = coord;
+    }
+
+    public Vector3f getAngle() {
+        return angle;
+    }
+
+    public void setAngle(Vector3f angle) {
+        this.angle = angle;
+    }
+
+    public int getLife() {
+        return life;
+    }
+
+    public void setLife(int life) {
+        this.life = life;
+    }
  
 }
