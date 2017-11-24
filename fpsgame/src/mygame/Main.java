@@ -2,10 +2,18 @@ package mygame;
 
 import com.jme3.app.SimpleApplication;
 import com.jme3.asset.TextureKey;
+import com.jme3.bullet.BulletAppState;
 import static com.jme3.bullet.PhysicsSpace.getPhysicsSpace;
 import com.jme3.bullet.collision.shapes.BoxCollisionShape;
+import com.jme3.bullet.collision.shapes.CapsuleCollisionShape;
+import com.jme3.bullet.collision.shapes.CollisionShape;
+import com.jme3.bullet.control.CharacterControl;
 import com.jme3.bullet.control.RigidBodyControl;
+import com.jme3.bullet.util.CollisionShapeFactory;
 import com.jme3.font.BitmapText;
+import com.jme3.input.KeyInput;
+import com.jme3.input.controls.ActionListener;
+import com.jme3.input.controls.KeyTrigger;
 import com.jme3.material.Material;
 import com.jme3.material.RenderState;
 import com.jme3.math.ColorRGBA;
@@ -15,6 +23,7 @@ import com.jme3.math.Vector3f;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.Geometry;
+import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
 import com.jme3.texture.Texture;
@@ -29,7 +38,7 @@ import java.util.Arrays;
  * Move your Logic into AppStates or Controls
  * @author normenhansen
  */
-public class Main extends SimpleApplication {
+public class Main extends SimpleApplication implements ActionListener {
       
     Material mat;
     Material matWall;
@@ -38,7 +47,12 @@ public class Main extends SimpleApplication {
     Vector3f coordPlayer;
     ArrayList<Tile> tileArray = new ArrayList<Tile>();
     int iMap, jMap;
-
+    private BulletAppState bulletAppState;
+    private RigidBodyControl landscape;
+    private CharacterControl player;
+    private boolean left = false, right = false, up = false, down = false;
+    private Vector3f walkDirection = new Vector3f();
+    
     public static void main(String[] args) {
         Main app = new Main();
         app.start();
@@ -47,12 +61,19 @@ public class Main extends SimpleApplication {
     @Override
     public void simpleInitApp() {
   
+        /** Set up Physics */
+        bulletAppState = new BulletAppState();
+        stateManager.attach(bulletAppState);
+        //bulletAppState.setDebugEnabled(true);
         
         boxParede2 = new Box(Vector3f.ZERO, 1f, 1f, 1f);
         boxParede2.scaleTextureCoordinates(new Vector2f(1.5f, 1.5f));
 
+        setUpKeys();
         initMaterial();
         initCrossHairs();
+        viewPort.setBackgroundColor(new ColorRGBA(0.7f, 0.8f, 1f, 1f));
+        flyCam.setMoveSpeed(1);
         
         try {
             loadMap("src\\mygame\\maps\\map1.txt");
@@ -64,11 +85,14 @@ public class Main extends SimpleApplication {
         initFloor(iMap, jMap);
         coordPlayer = coordInicio();
 
-        this.cam.setLocation(coordPlayer);
-        //cam.lookAt(Vector3f.ZERO, new Vector3f(0, 1, 0));
-        //cam.setFrustumFar(15);
+        CapsuleCollisionShape capsuleShape = new CapsuleCollisionShape(0.2f, 0.9f, 1);
+        player = new CharacterControl(capsuleShape, 0.05f);
+        player.setJumpSpeed(10);
+        player.setFallSpeed(10);
+        player.setGravity(20);
+        player.setPhysicsLocation(coordPlayer);
         
-        //desenhaCena(matriz);
+        bulletAppState.getPhysicsSpace().add(player);
         
     }
     
@@ -127,9 +151,16 @@ public class Main extends SimpleApplication {
         chao.setMaterial(matFloor);
         chao.setShadowMode(ShadowMode.Receive);
         chao.setLocalTranslation(i, -0.1f, j);
-        chao.addControl(new RigidBodyControl(new BoxCollisionShape(new Vector3f((float) i, 0.1f, (float) j)), 0));
+       // chao.addControl(new RigidBodyControl(new BoxCollisionShape(new Vector3f((float) i, 0.1f, (float) j)), 0));
              
+        CollisionShape sceneShape
+                = CollisionShapeFactory.createMeshShape(chao);
+        //landscape = new RigidBodyControl(sceneShape, 0);
+        landscape = new RigidBodyControl(0);
+        chao.addControl(landscape);
+        
         rootNode.attachChild(chao);  
+        bulletAppState.getPhysicsSpace().add(landscape);
     }
     
  
@@ -138,7 +169,17 @@ public class Main extends SimpleApplication {
         Spatial paredeBox = new Geometry("Box", boxParede2);
         paredeBox.setMaterial(matWall);
         paredeBox.setLocalTranslation(ori);
+        
+        
+        CollisionShape sceneShape
+                = CollisionShapeFactory.createMeshShape(paredeBox);
+        landscape = new RigidBodyControl(sceneShape, 0);
+        paredeBox.addControl(landscape);
+        
+        bulletAppState.getPhysicsSpace().add(landscape);
+        
         rootNode.attachChild(paredeBox);
+        
         
     }
     
@@ -168,12 +209,13 @@ public class Main extends SimpleApplication {
              if (t.getType() == 'i') {
                  System.out.println("achei o i"); 
                  System.out.println("x (i) = " + t.getTileX() + " e y (j) = " + t.getTileY());
-                 vt = new Vector3f(1 + t.getTileX() * 2, 0.5f,1 + t.getTileY() * 2);
+                 vt = new Vector3f(1 + t.getTileX() * 2, 2f,1 + t.getTileY() * 2);
                  break;
              }         
         }
         return vt;
     }
+    
     
     public void anguloInicio () {
         //procurar os elementos vizinhos
@@ -198,7 +240,6 @@ public class Main extends SimpleApplication {
                 reader.close();
                 break;
             }
-
             if (!line.startsWith("!")) {
                 lines.add(line);
                 coluna = Math.max(coluna, line.length());
@@ -217,8 +258,7 @@ public class Main extends SimpleApplication {
             for (int j = 0; j < coluna; j++) {
                 char type = line.charAt(j);
                 Tile t = new Tile(i, j, type);
-                tileArray.add(t);
-                
+                tileArray.add(t);                
                 //t.tileType();
                 if (type == '1') {
                     System.out.println("i = " + i + " j = " + j);
@@ -228,14 +268,50 @@ public class Main extends SimpleApplication {
             }
         }
     }
+    
+    private void setUpKeys() {
+        inputManager.addMapping("Left", new KeyTrigger(KeyInput.KEY_A));
+        inputManager.addMapping("Right", new KeyTrigger(KeyInput.KEY_D));
+        inputManager.addMapping("Up", new KeyTrigger(KeyInput.KEY_W));
+        inputManager.addMapping("Down", new KeyTrigger(KeyInput.KEY_S));
+        inputManager.addMapping("Jump", new KeyTrigger(KeyInput.KEY_SPACE));
+        inputManager.addListener(this, "Left");
+        inputManager.addListener(this, "Right");
+        inputManager.addListener(this, "Up");
+        inputManager.addListener(this, "Down");
+        inputManager.addListener(this, "Jump");
+    }
 
     @Override
     public void simpleUpdate(float tpf) {
-        //TODO: add update code
+        Vector3f camDir = cam.getDirection().clone().multLocal(0.05f);
+        Vector3f camLeft = cam.getLeft().clone().multLocal(0.03f);
+        walkDirection.set(0, 0, 0);
+        if (left)  { walkDirection.addLocal(camLeft); }
+        if (right) { walkDirection.addLocal(camLeft.negate()); }
+        if (up)    { walkDirection.addLocal(camDir); }
+        if (down)  { walkDirection.addLocal(camDir.negate()); }
+        player.setWalkDirection(walkDirection);
+        cam.setLocation(player.getPhysicsLocation());
     }
 
     @Override
     public void simpleRender(RenderManager rm) {
         //TODO: add render code
+    }
+
+    @Override
+    public void onAction(String binding, boolean value, float tpf) {
+        if (binding.equals("Left")) {
+            left = value;
+        } else if (binding.equals("Right")) {
+            right = value;
+        } else if (binding.equals("Up")) {
+            up = value;
+        } else if (binding.equals("Down")) {
+            down = value;
+        } else if (binding.equals("Jump")) {
+            player.jump();
+        }
     }
 }
