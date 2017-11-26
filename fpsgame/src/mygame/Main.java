@@ -34,6 +34,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This is the Main Class of your Game. You should only do initialization here.
@@ -51,7 +53,7 @@ public class Main extends SimpleApplication implements ActionListener {
     Box boxParede2;
     Vector3f coordPlayer;
     ArrayList<Tile> tileArray = new ArrayList<Tile>();
-    int iMap, jMap;
+    public static int jMap, iMap;
     private BulletAppState bulletAppState;
     private RigidBodyControl landscape;
     private CharacterControl player;
@@ -104,6 +106,13 @@ public class Main extends SimpleApplication implements ActionListener {
         player.setGravity(20);
         player.setPhysicsLocation(posInicio);      
         bulletAppState.getPhysicsSpace().add(player);
+        
+        try {
+            ManipulaArq.escritor("teste.txt");
+        } catch (IOException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
     }
     /* 
     map2.txt
@@ -228,32 +237,15 @@ public class Main extends SimpleApplication implements ActionListener {
         return endZone;          
     }
 
-    private void loadMap(String fileName) throws IOException {
+    private void loadMap(String fileName) throws IOException {       
         ArrayList lines = new ArrayList();
-        int coluna = 0;
-        int linha = 0;
-        BufferedReader reader = new BufferedReader(new FileReader(fileName));
+        
+        lines = ManipulaArq.leitor(fileName);
 
-        while (true) {
-            String line = reader.readLine();
-            if (line == null) {
-                reader.close();
-                break;
-            }
-            if (!line.startsWith("!")) {
-                lines.add(line);
-                coluna = Math.max(coluna, line.length());
-                jMap = coluna;
-
-            }
-        }
-        linha = lines.size();
-        iMap = linha;
-
-        for (int i = 0; i < linha; i++) {
+        for (int i = 0; i < iMap; i++) {
             String line = (String) lines.get(i);
             System.out.println(line);
-            for (int j = 0; j < coluna; j++) {
+            for (int j = 0; j < jMap; j++) {
                 char type = line.charAt(j);
                 Tile t = new Tile(i, j, type);
                 tileArray.add(t);
@@ -268,8 +260,7 @@ public class Main extends SimpleApplication implements ActionListener {
                     
                 } else if (type == 'e') {
                     //Posição da área de saída do jogador
-                    posExit = new Vector3f(1 + i * 2, 1f, 1 + j * 2);
-                    
+                    posExit = new Vector3f(1 + i * 2, 1f, 1 + j * 2);                 
                 }
             }
         }
